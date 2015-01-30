@@ -1,5 +1,9 @@
 from layer import *
 from learning_rule import * 
+from sklearn.datasets import fetch_mldata
+from sklearn import preprocessing
+from sklearn.cross_validation import train_test_split
+from sklearn.metrics import precision_recall_fscore_support
 
 def mnist_test(batch_size=10):
     mnist = fetch_mldata('MNIST original')

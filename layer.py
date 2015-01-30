@@ -5,10 +5,6 @@ import theano.tensor as T
 from theano.tensor.nnet import conv
 from theano.tensor.signal import downsample
 from learning_rule import *
-from sklearn.datasets import fetch_mldata
-from sklearn import preprocessing
-from sklearn.cross_validation import train_test_split
-from sklearn.metrics import precision_recall_fscore_support
 
 rng = np.random.RandomState(42)
 trng = T.shared_randomstreams.RandomStreams(42)
