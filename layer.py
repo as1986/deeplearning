@@ -35,6 +35,27 @@ class Projection:
         self.h = h
         return h
 
+class fProjection:
+    """
+    Vector => Matrix Projcection Layer
+    """
+    def __init__(self, vocab_size=None, hid_dim=None, embedding=None):
+        if embedding is None:
+            self.vocab_size = vocab_size
+            self.hid_dim = hid_dim
+            self.embedding = create_embedding(self.vocab_size, self.hid_dim)
+        else:
+            self.embedding = create_shared(embedding)
+        self.params = [ self.embedding ]
+
+    def fprop(self, x):
+        size = x.shape[0]
+        x = x.flatten()
+        tmp = self.embedding[x].flatten()
+        h = tmp.reshape((size,tmp.shape[0]/size))
+        self.h = h
+        return h
+
 class tProjection:
     """
     Matrix => Tensor Projcection Layer
@@ -166,6 +187,33 @@ class ConvLayer:
         self.h = h
         return h
 
+class sConvLayer(ConvLayer):
+    def __init__(self, filter_shape, image_shape, pool_size=(2,2)):
+        ConvLayer.__init__(self, filter_shape, image_shape, pool_size)
+        self.image_shape = image_shape
+
+    def fprop(self,x):
+        def step(u_t):
+            u_t = u_t.reshape(self.image_shape)
+            conv_out = conv.conv2d(
+                    input=u_t,
+                    filters=self.W,
+                    filter_shape=self.filter_shape,
+                    image_shape=self.image_shape
+                    )
+
+            pooled_out = downsample.max_pool_2d(
+                    input=conv_out,
+                    ds=self.pool_size,
+                    ignore_border=True
+                    )
+            return T.tanh(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x')).flatten()
+
+        h, _ = theano.scan(fn = step, sequences = x)
+
+        self.h = h
+        return h
+
 class RNN:
     def __init__(self, vis_dim, hid_dim, minibatch=True):
         prange = 4 * np.sqrt(6. / (vis_dim + hid_dim))
@@ -186,13 +234,13 @@ class RNN:
             return h
 
         if self.minibatch:
-            self.output_info = [ T.alloc(init, x.shape[0], self.hid_dim) for init in self.output_info ]
+            self.output_info = [ T.alloc(init, x.shape[1], self.hid_dim) for init in self.output_info ]
 
         h, _ = theano.scan(
             fn = step,
             sequences = x,
             outputs_info = self.output_info,
-            n_steps=x.shape[1]
+            n_steps=x.shape[0]
             )
 
         self.h = h
@@ -204,7 +252,7 @@ class LSTM:
     Alex Graves
     http://arxiv.org/pdf/1308.0850v5.pdf
     """
-    def __init__(self, vis_dim, hid_dim, h0=None, minibatch=True):
+    def __init__(self, vis_dim, hid_dim, h0=None, minibatch=False):
         prange = 1 * np.sqrt(6. / (vis_dim + hid_dim))
         self.hid_dim = hid_dim
         self.minibatch = minibatch
