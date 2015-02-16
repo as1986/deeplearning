@@ -21,14 +21,17 @@ class Projection:
     """
     Vector => Matrix Projcection Layer
     """
-    def __init__(self, vocab_size=None, hid_dim=None, embedding=None):
+    def __init__(self, vocab_size=None, hid_dim=None, embedding=None, update=False):
         if embedding is None:
             self.vocab_size = vocab_size
             self.hid_dim = hid_dim
             self.embedding = create_embedding(self.vocab_size, self.hid_dim)
         else:
             self.embedding = create_shared(embedding)
-        self.params = [ self.embedding ]
+        if update:
+            self.params = [ self.embedding ]
+        else:
+            self.params = [ ]
 
     def fprop(self, x):
         h = self.embedding[x]
@@ -37,22 +40,47 @@ class Projection:
 
 class fProjection:
     """
-    Vector => Matrix Projcection Layer
+    Matrix => Matrix Projcection Layer
     """
-    def __init__(self, vocab_size=None, hid_dim=None, embedding=None):
+    def __init__(self, vocab_size=None, hid_dim=None, embedding=None, update=False):
         if embedding is None:
             self.vocab_size = vocab_size
             self.hid_dim = hid_dim
             self.embedding = create_embedding(self.vocab_size, self.hid_dim)
         else:
             self.embedding = create_shared(embedding)
-        self.params = [ self.embedding ]
+        if update:
+            self.params = [ self.embedding ]
+        else:
+            self.params = []
 
     def fprop(self, x):
         size = x.shape[0]
         x = x.flatten()
         tmp = self.embedding[x].flatten()
         h = tmp.reshape((size,tmp.shape[0]/size))
+        self.h = h
+        return h
+
+class aProjection:
+    """
+    Matrix => Matrix Projcection Layer
+    """
+    def __init__(self, vocab_size=None, hid_dim=None, embedding=None, update=False):
+        if embedding is None:
+            self.vocab_size = vocab_size
+            self.hid_dim = hid_dim
+            self.embedding = create_embedding(self.vocab_size, self.hid_dim)
+        else:
+            self.embedding = create_shared(embedding)
+        if update:
+            self.params = [ self.embedding ]
+        else:
+            self.params = []
+
+    def fprop(self, x):
+        size = x.shape[0]
+        h = self.embedding[x].mean(axis=1)
         self.h = h
         return h
 

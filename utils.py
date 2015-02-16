@@ -27,3 +27,11 @@ def create_weight(vis_dim,hid_dim):
 
 def create_bias(dim):
     return create_shared(np.zeros((dim,)))
+
+def prop(layers,x):
+    for i, layer in enumerate(layers):
+        if i == 0:
+            layer_out = layer.fprop(x)
+        else:
+            layer_out = layer.fprop(layer_out)
+    return layers[-1].h
