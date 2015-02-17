@@ -30,20 +30,21 @@ def learning_rule(cost, params, max_norm = 5.0, lr = 0.01, momentum = 0.9, eps= 
     gsums = [theano.shared(np.zeros_like(param.get_value(borrow=True)).astype(theano.config.floatX)) if (method == 'adadelta' or method == 'adagrad') else None for param in params]
     xsums = [theano.shared(np.zeros_like(param.get_value(borrow=True)).astype(theano.config.floatX)) if method == 'adadelta' else None for param in params]
 
-    if clip is not None:
-        assert clip > 0
-        grad_clip = GradClip(-1.0 * clip, clip)
-        register_canonicalize(theano.gof.OpRemove(grad_clip), name='grad_clip')
-        gparams = T.grad(grad_clip(cost), params)
-    else:
-        gparams = T.grad(cost, params)
+    #if clip is not None:
+    #    assert clip > 0
+    #    grad_clip = GradClip(-1.0 * clip, clip)
+    #    register_canonicalize(theano.gof.OpRemove(grad_clip), name='grad_clip')
+    #    gparams = T.grad(grad_clip(cost), params)
+    #else:
+    gparams = T.grad(cost, params)
     updates = OrderedDict()
 
     for gparam, param, gmomentum, gms, gsum, xsum in zip(gparams, params, gmomentums, gmss, gsums, xsums):
         
-        if max_norm is not None:
-            grad_norm = gparam.norm(L=2)
-            gparam = (T.minimum(max_norm, grad_norm)/ grad_norm) * gparam
+        #if max_norm is not None:
+        #    grad_norm = gparam.norm(L=2)
+        #    gparam = (T.minimum(max_norm, grad_norm)/ grad_norm) * gparam
+        gparam = T.switch(gparam.norm(L=2) > 5, 5*gparam/gparam.norm(L=2), gparam) 
 
         if method == 'adadelta':
             updates[gsum] = T.cast(rho * gsum + (1. - rho) * (gparam **2), theano.config.floatX)
@@ -63,7 +64,6 @@ def learning_rule(cost, params, max_norm = 5.0, lr = 0.01, momentum = 0.9, eps= 
         else:
             raise NotImplementedError
     
-    if method == 'adadelta':
-        lr = rho
-
+    #if method == 'adadelta':
+    #    lr = rho
     return updates
