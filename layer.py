@@ -86,10 +86,12 @@ class aProjection:
 
 class tProjection:
     """
-    Matrix => Tensor Projcection Layer
+    Matrix => Tensor Projection Layer
     """
-    def __init__(self, vocab_size=None, hid_dim=None, embedding=None):
-        if embedding is None:
+    def __init__(self, vocab_size=None, hid_dim=None, embedding=None, orig=None):
+        if orig is not None:
+            self.copy_constructor(orig)
+        elif embedding is None:
             self.vocab_size = vocab_size
             self.hid_dim = hid_dim
             self.embedding = create_embedding(self.vocab_size, self.hid_dim)
@@ -101,6 +103,14 @@ class tProjection:
         h = self.embedding[x].dimshuffle((1,0,2))
         self.h = h
         return h
+
+    def copy_constructor(self, orig):
+        assert(isinstance(orig, tProjection))
+        self.vocab_size = orig.vocab_size
+        self.embedding = orig.embedding
+        self.hid_dim = orig.hid_dim
+        self.params = orig.params
+
 
 class dProjection:
     """
@@ -123,7 +133,16 @@ class dProjection:
         return h
 
 class Layer:
-    def __init__(self, vis_dim, hid_dim, func):
+    def __init__(self, vis_dim, hid_dim, func, orig=None):
+        if orig is not None:
+            assert isinstance(orig, Layer)
+            self.vis_dim = orig.vis_dim
+            self.hid_dim = orig.hid_dim
+            self.W = orig.W
+            self.b = orig.b
+            self.params = orig.params
+            self.func = orig.func
+            return
         self.vis_dim = vis_dim
         self.hid_dim = hid_dim
         self.W = create_weight(vis_dim,hid_dim)
@@ -280,7 +299,10 @@ class LSTM:
     Alex Graves
     http://arxiv.org/pdf/1308.0850v5.pdf
     """
-    def __init__(self, vis_dim, hid_dim, h0=None, minibatch=False):
+    def __init__(self, vis_dim, hid_dim, h0=None, minibatch=False, orig=None):
+        if orig is not None:
+            self.copy_constructor(orig)
+            return
         prange = 1 * np.sqrt(6. / (vis_dim + hid_dim))
         self.hid_dim = hid_dim
         self.minibatch = minibatch
@@ -317,6 +339,35 @@ class LSTM:
             self.W_u_ig, self.W_u_og, self.W_u_fg, self.W_u_in, self.W_h_ig, self.W_h_og, self.W_h_fg, self.W_h_in,
             self.W_c_ig, self.W_c_og, self.W_c_fg, self.B_ig, self.B_og, self.B_fg, self.B_in
         ]
+
+    def copy_constructor(self, orig):
+        assert(isinstance(orig, LSTM))
+        self.hid_dim = orig.hid_dim
+        self.minibatch = orig.minibatch
+        self.W_u_ig = orig.W_u_ig
+        self.W_u_og = orig.W_u_og
+        self.W_u_fg = orig.W_u_fg
+        self.W_u_in = orig.W_u_in
+
+        self.W_h_ig = orig.W_h_ig
+        self.W_h_og = orig.W_h_og
+        self.W_h_fg = orig.W_h_fg
+        self.W_h_in = orig.W_h_in
+
+        self.W_c_ig = orig.W_c_ig
+        self.W_c_og = orig.W_c_og
+        self.W_c_fg = orig.W_c_fg
+
+        self.B_ig = orig.B_u_ig
+        self.B_og = orig.B_u_og
+        self.B_fg = orig.B_u_fg
+        self.B_in = orig.B_u_in
+
+        self.c0 = orig.c0
+        self.h0 = orig.h0
+        self.output_info = orig.output_info
+        self.params = orig.params
+        return
     
     def fprop(self,x):
         """
