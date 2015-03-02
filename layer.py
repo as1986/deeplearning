@@ -133,7 +133,7 @@ class dProjection:
         return h
 
 class Layer:
-    def __init__(self, vis_dim, hid_dim, func, orig=None):
+    def __init__(self, vis_dim=0, hid_dim=0, func=None, orig=None):
         if orig is not None:
             assert isinstance(orig, Layer)
             self.vis_dim = orig.vis_dim
@@ -299,7 +299,7 @@ class LSTM:
     Alex Graves
     http://arxiv.org/pdf/1308.0850v5.pdf
     """
-    def __init__(self, vis_dim, hid_dim, h0=None, minibatch=False, orig=None):
+    def __init__(self, vis_dim=0, hid_dim=0, h0=None, minibatch=False, orig=None):
         if orig is not None:
             self.copy_constructor(orig)
             return
