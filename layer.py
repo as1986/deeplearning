@@ -358,10 +358,10 @@ class LSTM:
         self.W_c_og = orig.W_c_og
         self.W_c_fg = orig.W_c_fg
 
-        self.B_ig = orig.B_u_ig
-        self.B_og = orig.B_u_og
-        self.B_fg = orig.B_u_fg
-        self.B_in = orig.B_u_in
+        self.B_ig = orig.B_ig
+        self.B_og = orig.B_og
+        self.B_fg = orig.B_fg
+        self.B_in = orig.B_in
 
         self.c0 = orig.c0
         self.h0 = orig.h0
