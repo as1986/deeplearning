@@ -91,6 +91,7 @@ class tProjection:
     def __init__(self, vocab_size=None, hid_dim=None, embedding=None, orig=None):
         if orig is not None:
             self.copy_constructor(orig)
+            return
         elif embedding is None:
             self.vocab_size = vocab_size
             self.hid_dim = hid_dim
