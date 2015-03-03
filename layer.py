@@ -109,7 +109,7 @@ class tProjection:
         self.vocab_size = orig.vocab_size
         self.embedding = orig.embedding
         self.hid_dim = orig.hid_dim
-        self.params = orig.params
+        self.params = [ self.embedding ]
 
 
 class dProjection:
@@ -365,8 +365,11 @@ class LSTM:
 
         self.c0 = orig.c0
         self.h0 = orig.h0
-        self.output_info = orig.output_info
-        self.params = orig.params
+        self.output_info = [self.c0, self.h0]
+        self.params = [
+            self.W_u_ig, self.W_u_og, self.W_u_fg, self.W_u_in, self.W_h_ig, self.W_h_og, self.W_h_fg, self.W_h_in,
+            self.W_c_ig, self.W_c_og, self.W_c_fg, self.B_ig, self.B_og, self.B_fg, self.B_in
+        ]
         return
     
     def fprop(self,x):
