@@ -97,6 +97,8 @@ class tProjection:
             self.hid_dim = hid_dim
             self.embedding = create_embedding(self.vocab_size, self.hid_dim)
         else:
+            self.vocab_size = len(embedding)
+            self.hid_dim = len(embedding[0])
             self.embedding = create_shared(embedding)
         self.params = [ self.embedding ]
 
@@ -107,9 +109,9 @@ class tProjection:
 
     def copy_constructor(self, orig):
         assert(isinstance(orig, tProjection))
-        self.vocab_size = orig.vocab_size
         self.embedding = orig.embedding
-        self.hid_dim = orig.hid_dim
+        self.vocab_size = len(self.embedding)
+        self.hid_dim = len(self.embedding[0])
         self.params = [ self.embedding ]
 
 
@@ -187,7 +189,7 @@ class Layer:
 
 
 class EmbLayer:
-    def __init__(self, vis_dim=0, hid_dim=0, func=None, orig=None, lookup_func=None):
+    def __init__(self, vis_dim=0, hid_dim=0, func=None, orig=None):
         if orig is not None:
             self.copy_constructor(orig)
             return
@@ -197,7 +199,6 @@ class EmbLayer:
         self.b = create_bias(hid_dim)
         self.params = [ self.W, self.b ]
         self.func = func
-        self.lookup_func = lookup_func
 
     def copy_constructor(self, orig):
         assert isinstance(orig, EmbLayer)
@@ -207,11 +208,9 @@ class EmbLayer:
         self.b = orig.b
         self.params = orig.params
         self.func = orig.func
-        self.lookup_func = orig.lookup_func
         return
     def fprop(self,x):
-        looked_up = self.lookup_func(x)
-        h = self.func(T.dot(looked_up, self.W)+self.b)
+        h = self.func(T.dot(x, self.W)+self.b)
         self.h = h
         return h
 
