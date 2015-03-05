@@ -110,10 +110,20 @@ class tProjection:
     def copy_constructor(self, orig):
         assert(isinstance(orig, tProjection))
         self.embedding = orig.embedding
-        self.vocab_size = len(self.embedding)
-        self.hid_dim = len(self.embedding[0])
+        self.vocab_size = orig.vocab_size
+        self.hid_dim = orig.hid_dim
         self.params = [ self.embedding ]
 
+    def __getstate__(self):
+        return (self.vocab_size, self.hid_dim, self.embedding.eval())
+
+    def __setstate__(self, state):
+        vocab_size, hid_dim, embedding = state
+        self.vocab_size = vocab_size
+        self.hid_dim = hid_dim
+        self.embedding = create_shared(embedding)
+        self.params = [ self.embedding ]
+        return
 
 class dProjection:
     """
@@ -398,6 +408,72 @@ class LSTM:
             self.W_u_ig, self.W_u_og, self.W_u_fg, self.W_u_in, self.W_h_ig, self.W_h_og, self.W_h_fg, self.W_h_in,
             self.W_c_ig, self.W_c_og, self.W_c_fg, self.B_ig, self.B_og, self.B_fg, self.B_in
         ]
+
+    def __getstate__(self):
+        state = []
+        state.append(self.hid_dim)
+        state.append(self.minibatch)
+        state.append(self.W_u_ig.eval())
+        state.append(self.W_u_og.eval())
+        state.append(self.W_u_fg.eval())
+        state.append(self.W_u_in.eval())
+
+        state.append(self.W_h_ig.eval())
+        state.append(self.W_h_og.eval())
+        state.append(self.W_h_fg.eval())
+        state.append(self.W_h_in.eval())
+
+        state.append(self.W_c_ig.eval())
+        state.append(self.W_c_og.eval())
+        state.append(self.W_c_fg.eval())
+
+        state.append(self.B_ig.eval())
+        state.append(self.B_og.eval())
+        state.append(self.B_fg.eval())
+        state.append(self.B_in.eval())
+
+        state.append(self.c0.eval())
+        state.append(self.h0.eval())
+
+        return state
+
+    def __setstate__(self, state):
+        '''
+        FIXME this is not satisfactory at all!!!
+        :param state:
+        :return:
+        '''
+        self.hid_dim = state[0]
+        self.minibatch = state[1]
+        self.W_u_ig = create_shared(state[2])
+        self.W_u_og = create_shared(state[3])
+        self.W_u_fg = create_shared(state[4])
+        self.W_u_in = create_shared(state[5])
+
+        self.W_h_ig = create_shared(state[6])
+        self.W_h_og = create_shared(state[7])
+        self.W_h_fg = create_shared(state[8])
+        self.W_h_in = create_shared(state[9])
+
+        self.W_c_ig = create_shared(state[10])
+        self.W_c_og = create_shared(state[11])
+        self.W_c_fg = create_shared(state[12])
+
+        self.B_ig = create_shared(state[13])
+        self.B_og = create_shared(state[14])
+        self.B_fg = create_shared(state[15])
+        self.B_in = create_shared(state[16])
+
+        self.c0 = create_shared(state[17])
+        self.h0 = create_shared(state[18])
+
+        self.output_info = [self.c0, self.h0]
+        self.params = [
+            self.W_u_ig, self.W_u_og, self.W_u_fg, self.W_u_in, self.W_h_ig, self.W_h_og, self.W_h_fg, self.W_h_in,
+            self.W_c_ig, self.W_c_og, self.W_c_fg, self.B_ig, self.B_og, self.B_fg, self.B_in
+        ]
+
+        return
 
     def copy_constructor(self, orig):
         assert(isinstance(orig, LSTM))
