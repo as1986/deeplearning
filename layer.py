@@ -185,6 +185,65 @@ class Layer:
             print("epoch: ", epoch, "COST: ", np.mean(c))
         return predict()
 
+
+class EmbLayer:
+    def __init__(self, vis_dim=0, hid_dim=0, func=None, orig=None, lookup_func=None):
+        if orig is not None:
+            self.copy_constructor(orig)
+            return
+        self.vis_dim = vis_dim
+        self.hid_dim = hid_dim
+        self.W = create_weight(vis_dim,hid_dim)
+        self.b = create_bias(hid_dim)
+        self.params = [ self.W, self.b ]
+        self.func = func
+        self.lookup_func = lookup_func
+
+    def copy_constructor(self, orig):
+        assert isinstance(orig, EmbLayer)
+        self.vis_dim = orig.vis_dim
+        self.hid_dim = orig.hid_dim
+        self.W = orig.W
+        self.b = orig.b
+        self.params = orig.params
+        self.func = orig.func
+        self.lookup_func = orig.lookup_func
+        return
+    def fprop(self,x):
+        looked_up = self.lookup_func(x)
+        h = self.func(T.dot(looked_up, self.W)+self.b)
+        self.h = h
+        return h
+
+    def pretrain(self,X,epochs,batch_size=100,corruption_rate=0.0):
+        X = create_shared(X)
+        n_batches = X.get_value(borrow=True).shape[0] / batch_size
+
+        x = T.fmatrix('x')
+        W_prime = create_weight(self.hid_dim,self.vis_dim)
+        b_prime = create_bias(self.vis_dim)
+        x = x * trng.binomial(x.shape,p=1-corruption_rate, n=1, dtype=x.dtype)
+        z = self.fprop(x)
+        out = self.func(T.dot(z,W_prime) + b_prime)
+        params = self.params + [ W_prime, b_prime ]
+        cost = T.sum((x-out)**2)/2
+        updates = learning_rule(cost, params, max_norm = 1.0, eps= 1e-6, rho=0.65, method = "adadelta")
+
+        index = T.lscalar("index")
+        batch_begin = index * batch_size
+        batch_end = batch_begin + batch_size
+        train = theano.function(
+                inputs = [index],
+                outputs = cost,
+                updates = updates,
+                givens=[(x, X[batch_begin:batch_end])]
+                )
+        predict = theano.function([],z,givens=[(x,X)])
+        for epoch in xrange(epochs):
+            c = [train(batch_index) for batch_index in xrange(n_batches)]
+            print("epoch: ", epoch, "COST: ", np.mean(c))
+        return predict()
+
 class ConvLayer:
     """
     This layer is borrowed from http://deeplearning.net/tutorial/lenet.html
