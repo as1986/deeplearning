@@ -114,14 +114,21 @@ class tProjection:
         self.hid_dim = orig.hid_dim
         self.params = [ self.embedding ]
 
+    def set_embeddings(self, embedding):
+        self.vocab_size = len(embedding)
+        self.hid_dim = len(embedding[0])
+        self.embedding = create_shared(embedding)
+        self.params = [ self.embedding ]
+
+
     def __getstate__(self):
         return (self.vocab_size, self.hid_dim, self.embedding.eval())
 
     def __setstate__(self, state):
         vocab_size, hid_dim, embedding = state
-        self.vocab_size = vocab_size
-        self.hid_dim = hid_dim
-        self.embedding = create_shared(embedding)
+        self.vocab_size = len(embedding)
+        self.hid_dim = len(embedding[0])
+        self.embedding = create_shared(np.asarray(embedding))
         self.params = [ self.embedding ]
         return
 
@@ -445,27 +452,27 @@ class LSTM:
         '''
         self.hid_dim = state[0]
         self.minibatch = state[1]
-        self.W_u_ig = create_shared(state[2])
-        self.W_u_og = create_shared(state[3])
-        self.W_u_fg = create_shared(state[4])
-        self.W_u_in = create_shared(state[5])
+        self.W_u_ig = create_shared(np.asarray(state[2]))
+        self.W_u_og = create_shared(np.asarray(state[3]))
+        self.W_u_fg = create_shared(np.asarray(state[4]))
+        self.W_u_in = create_shared(np.asarray(state[5]))
 
-        self.W_h_ig = create_shared(state[6])
-        self.W_h_og = create_shared(state[7])
-        self.W_h_fg = create_shared(state[8])
-        self.W_h_in = create_shared(state[9])
+        self.W_h_ig = create_shared(np.asarray(state[6]))
+        self.W_h_og = create_shared(np.asarray(state[7]))
+        self.W_h_fg = create_shared(np.asarray(state[8]))
+        self.W_h_in = create_shared(np.asarray(state[9]))
 
-        self.W_c_ig = create_shared(state[10])
-        self.W_c_og = create_shared(state[11])
-        self.W_c_fg = create_shared(state[12])
+        self.W_c_ig = create_shared(np.asarray(state[10]))
+        self.W_c_og = create_shared(np.asarray(state[11]))
+        self.W_c_fg = create_shared(np.asarray(state[12]))
 
-        self.B_ig = create_shared(state[13])
-        self.B_og = create_shared(state[14])
-        self.B_fg = create_shared(state[15])
-        self.B_in = create_shared(state[16])
+        self.B_ig = create_shared(np.asarray(state[13]))
+        self.B_og = create_shared(np.asarray(state[14]))
+        self.B_fg = create_shared(np.asarray(state[15]))
+        self.B_in = create_shared(np.asarray(state[16]))
 
-        self.c0 = create_shared(state[17])
-        self.h0 = create_shared(state[18])
+        self.c0 = create_shared(np.asarray(state[17]))
+        self.h0 = create_shared(np.asarray(state[18]))
 
         self.output_info = [self.c0, self.h0]
         self.params = [
