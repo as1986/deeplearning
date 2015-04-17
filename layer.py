@@ -21,22 +21,53 @@ class Projection:
     """
     Vector => Matrix Projcection Layer
     """
-    def __init__(self, vocab_size=None, hid_dim=None, embedding=None, update=False):
+    def __init__(self, vocab_size=None, hid_dim=None, embedding=None, update=False, orig=None):
+        if orig is not None:
+            self.copy_constructor(orig)
+            return
         if embedding is None:
             self.vocab_size = vocab_size
             self.hid_dim = hid_dim
             self.embedding = create_embedding(self.vocab_size, self.hid_dim)
         else:
             self.embedding = create_shared(embedding)
+            self.vocab_size = len(embedding)
+            self.hid_dim = len(embedding[0])
         if update:
             self.params = [ self.embedding ]
         else:
             self.params = [ ]
 
     def fprop(self, x):
-        h = self.embedding[x]
+        h = self.embedding[x].reshape((1,self.vocab_size))
         self.h = h
         return h
+
+    def copy_constructor(self, orig):
+        assert(isinstance(orig, Projection))
+        self.embedding = orig.embedding
+        self.vocab_size = orig.vocab_size
+        self.hid_dim = orig.hid_dim
+        self.params = [ self.embedding ]
+
+    def set_embeddings(self, embedding):
+        self.vocab_size = len(embedding)
+        self.hid_dim = len(embedding[0])
+        self.embedding = create_shared(embedding)
+        self.params = [ self.embedding ]
+
+
+    def __getstate__(self):
+        return (self.vocab_size, self.hid_dim, self.embedding.eval())
+
+    def __setstate__(self, state):
+        vocab_size, hid_dim, embedding = state
+        self.vocab_size = len(embedding)
+        self.hid_dim = len(embedding[0])
+        self.embedding = create_shared(np.asarray(embedding))
+        self.params = [ self.embedding ]
+        return
+
 
 class fProjection:
     """
